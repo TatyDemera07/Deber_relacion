@@ -1,11 +1,146 @@
-import { Global, DataBaseModule } from '@nestjs/common';
-import { autorProviders} from 'src/autor/autor.service';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm/repository/Repository';
+@Injectable()
+export class ProductsService {
+    [x: string]: any;
+  constructor(
+    @Inject(RepositoryEnum.PRODUCT_REPOSITORY)
+    private repository: Repository<ProductEntity>,
+  ) {}
 
-@Global()
-@DataBaseModule({
-    imports: [ DataBaseModule],
-    controllers: [],
-    providers: [...autorProviders],
-    exports: [],
-  })
-export class autorModule {}
+
+  async create(payload: CreateProductDto): Promise<ServiceResponseHttpModel> {
+    const newProduct = this.repository.create(payload); //se crea el producto
+    const productCreated = this.repository.save(newProduct); //guardar el producto nuevo creado
+    return { data: plainToInstance(ReadProductDto, productCreated) }; //visualizamos
+  }
+
+  async catalogue(): Promise<ServiceResponseHttpModel> {
+    const newEvent = this.repository.findAndCount({ take: 1000 });
+    return {
+      data: this.response[0],
+      pagination: { totaItems: response[1], limit: 10 },
+    };
+  }
+
+  //*Es asicrono cuando de vuelve una promesa
+  async findAll(params?: FilterProductDto): Promise<ServiceResponseHttpModel> {
+    if (params?.limit > 0 && params?.page >= 0)
+      return await this.paginateAndFilter(params);
+    const response = await this.repository.findAndCount({
+      order: {
+        updateAt: 'DESC',
+      },
+    });
+    return {
+      data: plainToInstance(ReadProductDto, response[0]),
+      pagination: { totalItems: response[1], limit: 10 },
+    };
+  }
+
+  async findOne(id: string): Promise<ServiceResponseHttpModel> {
+    const product = await this.repository.findOneBy({ id });
+
+    if (!product) {
+      throw new NotFoundException('Project not found');
+    }
+    return { data: plainToInstance(ReadProductDto, product) };
+  }
+
+   async update(
+     id: string,
+     payload: UpdateProductDto,
+ ): Promise<ServiceResponseHttpModel> {
+     const product = await this.repository.preload({ id, ...payload });
+
+     if (!product) {
+         throw new NotFoundException("product not found");
+     }
+     const productUpdated = await this.repository.save(product);
+
+     return { data: plainToInstance(ReadProductDto, productUpdated) };
+ }
+
+ async remove(id: string): Promise<ServiceResponseHttpModel> {
+     const product = await this.repository.findOneBy({ id });
+
+     if (!product) {throw new NotFoundException("product not found");}
+    const productDelete = await this.repository.softRemove(product);
+
+    return { data: plainToInstance(ReadProductDto, productDelete) };
+ }
+ //cuidado con este metodo este is es necesario
+
+ async removeAll(payload: ProductEntity[]): Promise<ServiceResponseHttpModel> {
+     const productsDeleted = await this.repository.softRemove(payload);
+     return { data: productsDeleted };
+ }
+ private async paginateAndFilter(
+    params: FilterProductDto
+ ): Promise<ServiceResponseHttpModel> {
+     let where: FindOptionsWhere<ProductEntity> | FindOptionsWhere<ProductEntity>[];
+     where = {};
+    let { page, search } = params;
+    const { limit } = params;
+
+     if (search) {
+         search = search.trim();
+         page = 0;
+         where = [];
+        where.push({ title: ILike(%${search}%) });
+     }
+
+     const response = await this.repository.findAndCount({
+       where,
+         take: limit,
+         skip: PaginationDto.getOffset(limit, page),
+         order: {
+             updatedAt: 'DESC'
+        },
+
+   });
+    return {
+       data: plainToInstance(ReadProductDto, response[0]),
+       pagination: { limit, totalItems: response[1] }, data : data [0]
+   }
+
+ }
+ async activateproduct(payload: CreateProductDto): Promise<ServiceResponseHttpModel> {
+     const newproduct = this.repository.create(payload);
+     const productCreated = await this.repository.save(newproduct);
+
+     return { data: plainToInstance(ReadProductDto, productCreated) };
+   }
+
+   async closeproduct(id: string): Promise<ServiceResponseHttpModel> {
+     const product = await this.repository.findOneBy({ id });
+
+     if (!product) {
+         throw new NotFoundException("product not found");
+     }
+     const productDelete = await this.repository.softR
+
+function plainToInstance(ReadProductDto: any, productCreated: Promise<ProductEntity[]>) {
+           throw new Error('Function not implemented.');
+       }
+       function plainToInstance(ReadProductDto: typeof ReadProductDto, productCreated: Promise<ProductEntity>) {
+           throw new Error('Function not implemented.');
+       }
+
+       function plainToInstance(ReadProductDto: typeof ReadProductDto, productCreated: Promise<ProductEntity>) {
+           throw new Error('Function not implemented.');
+       }
+
+       function plainToInstance(ReadProductDto: typeof ReadProductDto, productCreated: Promise<ProductEntity>) {
+           throw new Error('Function not implemented.');
+       }
+
+       function plainToInstance(ReadProductDto: typeof ReadProductDto, productUpdated: ProductEntity) {
+           throw new Error('Function not implemented.');
+       }
+   }
+}
+
+function plainToInstance(ReadProductDto: typeof ReadProductDto, productUpdated: ProductEntity) {
+    throw new Error('Function not implemented.');
+}
